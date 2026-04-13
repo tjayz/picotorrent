@@ -14,15 +14,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(WITH_STATIC_CRT "" Off)
 # -----------------------
 
-# --------- wx options
-set(wxBUILD_SHARED        OFF   CACHE BOOL   "" FORCE)
-set(wxBUILD_COMPATIBILITY "3.2" CACHE STRING "" FORCE)
-set(wxUSE_EXCEPTIONS      OFF   CACHE BOOL   "" FORCE)
-# --------------------
-
 # vendor libs
 add_subdirectory(vendor/sentry-crashpad)
-add_subdirectory(vendor/wx)
 
 # pico components
 add_subdirectory(src/pql)
@@ -33,6 +26,7 @@ find_package(fmt                 CONFIG REQUIRED)
 find_package(LibtorrentRasterbar CONFIG REQUIRED)
 find_package(nlohmann_json       CONFIG REQUIRED)
 find_package(unofficial-sqlite3  CONFIG REQUIRED)
+find_package(wxWidgets           REQUIRED COMPONENTS core base propgrid)
 
 # Generate buildinfo file
 configure_file("${CMAKE_SOURCE_DIR}/src/picotorrent/buildinfo.cpp.in" "${CMAKE_SOURCE_DIR}/src/picotorrent/buildinfo.cpp" @ONLY)
@@ -167,12 +161,14 @@ target_compile_definitions(
     PRIVATE
     -D_UNICODE
     -D_WIN32
-    -D_WIN32_WINNT=0x0600
+    -D_WIN32_WINNT=0x0A00
     -DNOMINMAX
     -DPICOJSON_USE_INT64
     -DUNICODE
     -DWIN32
     -DWIN32_LEAN_AND_MEAN
+
+    ${wxWidgets_DEFINITIONS}
 
     -DLIBPICO_API_EXPORT
 
@@ -180,8 +176,6 @@ target_compile_definitions(
     -DPICO_VERSION_MAJOR=${GITVERSION_VAR_VERSION_MAJOR}
     -DPICO_VERSION_MINOR=${GITVERSION_VAR_VERSION_MINOR}
     -DPICO_VERSION_PATCH=${GITVERSION_VAR_VERSION_PATCH}
-
-    -DPICO_WX_GIT_COMMITISH=${PICO_WX_GIT_COMMITISH}
 )
 
 target_compile_options(PicoTorrent PRIVATE /guard:cf /W4 /WX)
@@ -191,6 +185,7 @@ target_include_directories(
     PRIVATE
 
     include
+    ${wxWidgets_INCLUDE_DIRS}
 )
 
 target_link_libraries(
@@ -203,7 +198,7 @@ target_link_libraries(
     Boost::log
 
     # wxWidgets
-    wxcore wxbase wxpropgrid
+    ${wxWidgets_LIBRARIES}
 
     # Windows
     Comctl32
